@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* ── Tailwind v4: class-based dark mode ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ════════════════════════════════════════════════
+   "ELECTRIC NIGHT" — Premium Developer Palette
+   ════════════════════════════════════════════════
+   Dark  : Deep Midnight · Electric Cyan · Indigo
+   Light : Icy White     · Ocean Blue   · Indigo
+   ════════════════════════════════════════════════ */
+:root {
+  /* ── Light ── */
+  --bg:              #F0F9FF;
+  --bg-alt:          #E0F2FE;
+  --text:            #0C1A2E;
+  --cards:           #FFFFFF;
+  --accent:          #0891B2;    /* deep ocean cyan     */
+  --accent-rgb:      8, 145, 178;
+  --secondary:       #4F46E5;    /* indigo              */
+  --secondary-rgb:   79, 70, 229;
+  --muted:           #475569;
+  --glass-bg:        rgba(240,249,255,0.85);
+  --glass-border:    rgba(8,145,178,0.18);
+  --shadow:          rgba(8,145,178,0.08);
+}
+
+.dark {
+  /* ── Dark ── */
+  --bg:              #030B14;    /* deep midnight       */
+  --bg-alt:          #040E19;
+  --text:            #E2EDF5;    /* cool white          */
+  --cards:           #071526;    /* dark navy           */
+  --accent:          #22D3EE;    /* electric cyan       */
+  --accent-rgb:      34, 211, 238;
+  --secondary:       #818CF8;    /* indigo glow         */
+  --secondary-rgb:   129, 140, 248;
+  --muted:           #94A3B8;
+  --glass-bg:        rgba(7,21,38,0.65);
+  --glass-border:    rgba(34,211,238,0.14);
+  --shadow:          rgba(0,0,0,0.60);
+}
+
+/* back-compat aliases so @theme picks up */
+:root   { --background: var(--bg); }
+.dark   { --background: var(--bg); }
+
+/* ══════════════════════════
+   TAILWIND @theme
+   ══════════════════════════ */
+@theme {
+  --color-background: var(--bg);
+  --color-text:       var(--text);
+  --color-cards:      var(--cards);
+  --color-accent:     var(--accent);
+  --color-secondary:  var(--secondary);
+  --color-muted:      var(--muted);
+
+  --font-sans:    'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  --animate-float:      float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4,0,0.6,1) infinite;
+
+  @keyframes float {
+    0%,100% { transform: translateY(0);   }
+    50%     { transform: translateY(-10px); }
+  }
+}
+
+/* ══════════════════════════
+   BASE
+   ══════════════════════════ */
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    color:            var(--text);
+    font-family:      'Inter', sans-serif;
+    overflow-x:       hidden;
+    transition:       background-color 0.35s ease, color 0.25s ease;
+  }
+
+  ::selection {
+    background-color: rgba(var(--accent-rgb), 0.25);
+    color: inherit;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background:    rgba(var(--accent-rgb), 0.45);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--accent-rgb), 0.75);
+  }
+}
+
+/* ══════════════════════════
+   UTILITIES
+   ══════════════════════════ */
+@layer utilities {
+  .glass {
+    background-color:        var(--glass-bg);
+    backdrop-filter:         blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border:                  1px solid var(--glass-border);
+    box-shadow:              0 20px 40px -8px var(--shadow),
+                             0  4px 12px -4px var(--shadow);
+    transition:              border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .focus-ring { outline: none; }
+  .focus-ring:focus-visible {
+    outline:        2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius:  6px;
+  }
+
+  .gradient-text {
+    background:              linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip:         text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* ══════════════════════════
+   GLOW CARD hover effect
+   ══════════════════════════ */
+.glow-card { position: relative; overflow: hidden; }
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(var(--accent-rgb), 0.07),
+    transparent 42%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+.glow-card:hover::before { opacity: 1; }
+.glow-card > * { position: relative; z-index: 1; }
