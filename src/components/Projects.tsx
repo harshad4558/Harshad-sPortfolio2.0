@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { Tilt } from 'react-tilt';
+import Tilt from 'react-parallax-tilt';
 import { projects } from '../data/projects';
 import { FiGithub, FiExternalLink, FiClock, FiCheckCircle } from 'react-icons/fi';
 
@@ -23,18 +23,8 @@ export const Projects: React.FC = () => {
     show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 80, damping: 12 } },
   };
 
-  const tiltOptions = {
-    reverse: false,
-    max: 12,
-    perspective: 1000,
-    scale: 1.02,
-    speed: 400,
-    transition: true,
-    axis: null,
-    reset: true,
-    easing: 'cubic-bezier(.03,.98,.52,.99)',
-  };
-
+  // react-parallax-tilt uses props directly instead of an options object
+  // so we removed the tiltOptions object and will pass them inline
   return (
     <section id="projects" className="py-20 md:py-28 relative overflow-hidden bg-background">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -63,7 +53,16 @@ export const Projects: React.FC = () => {
         >
           {projects.map((project, index) => (
             <motion.div key={index} variants={cardVariants} className="h-full">
-              <Tilt options={tiltOptions} className="h-full">
+              <Tilt 
+                tiltMaxAngleX={12} 
+                tiltMaxAngleY={12} 
+                perspective={1000} 
+                scale={1.02} 
+                transitionSpeed={400} 
+                tiltReverse={false} 
+                reset={true} 
+                className="h-full"
+              >
                 <div className="glass glow-card rounded-2xl overflow-hidden h-full flex flex-col group border border-white/5 hover:border-accent/25 transition-all duration-300 shadow-xl hover:shadow-accent/5">
                   
                   {/* Project Image and Status Overlay */}
