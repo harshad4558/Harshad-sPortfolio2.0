@@ -55,10 +55,17 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
 
   const handleLinkClick = (id: string) => {
     setIsMobileMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    
+    // Slight delay to allow the mobile menu to start closing before scrolling
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        // Calculate position minus the fixed navbar height (approx 80-100px)
+        const offset = 90;
+        const top = el.offsetTop - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    }, 150);
   };
 
   return (
