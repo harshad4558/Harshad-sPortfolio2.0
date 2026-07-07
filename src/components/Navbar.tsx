@@ -147,7 +147,13 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden w-full border-t border-white/5 dark:border-white/5 border-black/5 bg-[#0B1120] dark:bg-[#0B1120] bg-background-light px-6 py-4 flex flex-col space-y-4"
+            className="lg:hidden absolute top-full left-0 right-0 w-full border-t border-[var(--glass-border)] px-6 py-4 flex flex-col space-y-4"
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            }}
           >
             <ul className="flex flex-col space-y-2">
               {navLinks.map((link) => (
@@ -156,9 +162,13 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
                     onClick={() => handleLinkClick(link.id)}
                     className={`w-full text-left px-4 py-2.5 text-base tracking-wide rounded-lg transition-colors cursor-pointer focus-ring ${
                       activeSection === link.id
-                        ? 'bg-accent/15 text-accent font-semibold'
-                        : 'text-muted dark:text-muted hover:bg-white/5'
+                        ? 'font-semibold'
+                        : 'text-muted hover:text-text'
                     }`}
+                    style={{
+                      background: activeSection === link.id ? 'rgba(var(--accent-rgb), 0.15)' : 'transparent',
+                      color: activeSection === link.id ? 'var(--accent)' : undefined
+                    }}
                   >
                     {link.label}
                   </button>
