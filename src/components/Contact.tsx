@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiPhone, FiLinkedin, FiGithub, FiSend, FiLoader, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import type { IconType } from 'react-icons';
 
 interface FormState {
   name: string;
@@ -104,7 +105,7 @@ const Field: React.FC<FieldProps> = ({ id, label, type = 'text', rows, value, er
 /* ── Sidebar contact card ─────────────────────────────────── */
 interface ContactCardProps {
   href: string;
-  icon: React.ElementType;
+  icon: IconType;
   label: string;
   value: string;
   external?: boolean;
