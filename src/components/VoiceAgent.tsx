@@ -7,7 +7,7 @@ import { FiMic, FiVolumeX, FiCpu } from 'react-icons/fi';
    Portfolio Knowledge Base — fed to Gemini as system context
    ─────────────────────────────────────────────────────────────── */
 const PORTFOLIO_CONTEXT = `
-You are Harshad Patil's AI portfolio assistant. You answer questions about Harshad ONLY using the information below. Keep answers concise (2-4 sentences max), conversational, and friendly. If someone asks something outside this data, politely say you only know about Harshad's portfolio. Always speak in third person about Harshad.
+You are Harshad Patil. You are talking to a visitor on your portfolio website. Answer their questions about yourself using ONLY the information below. Provide detailed, conversational, and friendly answers as if you are a real person talking about your own skills, projects, and background. Keep your responses natural and conversational. If someone asks something outside this data, politely say that you prefer to focus on your professional portfolio. Always speak in the first person (use 'I', 'my', 'me'). IMPORTANT: Do NOT use any Markdown formatting in your response (no asterisks, no bold text). Just use plain conversational text.
 
 === ABOUT ===
 Name: Harshad Patil
@@ -79,6 +79,31 @@ interface ChatMessage {
   text: string;
 }
 
+/* ─── Smart Section Navigation ──────────────────────────────── */
+function navigateToSection(userMessage: string): void {
+  const text = userMessage.toLowerCase();
+
+  const sectionKeywords: { id: string; keywords: string[] }[] = [
+    { id: 'projects',   keywords: ['project', 'projects', 'greenpath', 'resume builder', 'bus booking', 'work', 'built', 'build', 'made', 'created'] },
+    { id: 'skills',     keywords: ['skill', 'skills', 'technology', 'technologies', 'tech stack', 'what do you know', 'programming', 'language', 'react', 'node', 'javascript', 'java', 'python'] },
+    { id: 'experience', keywords: ['experience', 'internship', 'intern', 'job', 'work experience', 'ishwarya', 'company', 'role'] },
+    { id: 'education',  keywords: ['education', 'study', 'studied', 'university', 'college', 'degree', 'mca', 'bca', 'shivaji', 'qualification'] },
+    { id: 'about',      keywords: ['about', 'who are you', 'tell me about', 'yourself', 'background', 'introduction'] },
+    { id: 'services',   keywords: ['service', 'services', 'offer', 'offerings', 'what do you do', 'hire', 'help'] },
+    { id: 'contact',    keywords: ['contact', 'email', 'phone', 'reach', 'connect', 'linkedin', 'hire you', 'message'] },
+  ];
+
+  for (const section of sectionKeywords) {
+    if (section.keywords.some(kw => text.includes(kw))) {
+      const el = document.getElementById(section.id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+  }
+}
+
 /* ─── Gemini API call ────────────────────────────────────────── */
 async function askGemini(userMessage: string, history: ChatMessage[]): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -88,14 +113,6 @@ async function askGemini(userMessage: string, history: ChatMessage[]): Promise<s
 
   // Build the conversation history for Gemini
   const contents = [
-    {
-      role: 'user',
-      parts: [{ text: PORTFOLIO_CONTEXT }],
-    },
-    {
-      role: 'model',
-      parts: [{ text: "Understood! I am Harshad Patil's AI portfolio assistant. I will answer questions about his skills, projects, experience, and education using only the information provided. How can I help you?" }],
-    },
     // Add conversation history
     ...history.map((msg) => ({
       role: msg.role === 'user' ? 'user' : 'model',
@@ -109,32 +126,45 @@ async function askGemini(userMessage: string, history: ChatMessage[]): Promise<s
   ];
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: PORTFOLIO_CONTEXT }]
+          },
           contents,
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 250,
+            maxOutputTokens: 1000,
             topP: 0.9,
           },
         }),
+        signal: controller.signal,
       }
     );
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      console.error('Gemini API error:', response.status);
-      return "I'm having trouble connecting to my AI service right now. Please try again in a moment!";
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      return `API Error ${response.status}. Please check your API key or quota.`;
     }
 
     const data = await response.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     return text || "I couldn't generate a response. Could you please rephrase your question?";
-  } catch (err) {
+  } catch (err: any) {
     console.error('Gemini fetch error:', err);
+    if (err.name === 'AbortError') {
+      return "My AI service is taking too long to respond. Let's try again!";
+    }
     return "I'm having trouble reaching my AI service. Please check your internet connection and try again!";
   }
 }
@@ -142,8 +172,15 @@ async function askGemini(userMessage: string, history: ChatMessage[]): Promise<s
 /* ─── Male Voice Selector ────────────────────────────────────── */
 function getMaleVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
   const voices = synth.getVoices();
-  const maleKeywords = ['male', 'david', 'daniel', 'mark', 'james', 'alex', 'fred', 'tom', 'george', 'ryan', 'eric', 'guy', 'aaron', 'richard', 'bruce'];
+  const indianVoices = voices.filter(v => v.lang === 'en-IN' || v.name.toLowerCase().includes('india'));
+  const maleKeywords = ['male', 'david', 'daniel', 'mark', 'james', 'alex', 'fred', 'tom', 'george', 'ryan', 'eric', 'guy', 'aaron', 'richard', 'bruce', 'ravi', 'rishi'];
+  
   return (
+    // Try Indian Male first
+    indianVoices.find(v => maleKeywords.some(kw => v.name.toLowerCase().includes(kw))) ||
+    indianVoices.find(v => !v.name.toLowerCase().includes('female')) ||
+    indianVoices[0] ||
+    // Fallback to any Male
     voices.find(
       (v) => v.lang.startsWith('en') && maleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
     ) ||
@@ -161,6 +198,7 @@ export const VoiceAgent: React.FC = () => {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [supported, setSupported] = useState(false);
   const [synthReady, setSynthReady] = useState(false);
+  const [shouldRestart, setShouldRestart] = useState(false);
 
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -278,8 +316,12 @@ export const VoiceAgent: React.FC = () => {
         // Add user message to history
         const newHistory = [...history, { role: 'user' as const, text: finalTranscript }];
 
-        // Query Gemini
-        const response = await askGemini(finalTranscript, history);
+        // Query Gemini and remove any markdown characters so they aren't spoken aloud
+        let response = await askGemini(finalTranscript, history);
+        response = response.replace(/[*_#`~]/g, '');
+
+        // Navigate to relevant section based on what was asked
+        navigateToSection(finalTranscript);
 
         // Add assistant response to history (keep last 10 messages)
         const updatedHistory = [
@@ -292,8 +334,9 @@ export const VoiceAgent: React.FC = () => {
         setState('speaking');
         setCaption(response);
         await speakText(response);
-        setState('idle');
-        setCaption('');
+        
+        // Auto-restart listening after it finishes speaking
+        setShouldRestart(true);
       }
     };
 
@@ -327,12 +370,63 @@ export const VoiceAgent: React.FC = () => {
 
   /* ── Toggle handler ── */
   const handleToggle = useCallback(() => {
-    if (state === 'idle') {
+    if (state === 'idle' || state === 'speaking') {
       startListening();
     } else {
       stopAll();
     }
   }, [state, startListening, stopAll]);
+
+  /* ── Continuous Conversation Effect ── */
+  useEffect(() => {
+    if (shouldRestart) {
+      setShouldRestart(false);
+      // Only restart if it wasn't manually stopped (i.e. still in speaking state)
+      if (state === 'speaking') {
+        startListening();
+      }
+    }
+  }, [shouldRestart, state, startListening]);
+
+  /* ── Initial Greeting (Waits for first user interaction due to Autoplay policies) ── */
+  useEffect(() => {
+    if (!supported || !synthReady) return;
+    
+    // Check if we've already greeted this session
+    const hasGreeted = sessionStorage.getItem('voice_agent_greeted');
+    if (!hasGreeted) {
+      const playGreeting = () => {
+        sessionStorage.setItem('voice_agent_greeted', 'true');
+        
+        const hour = new Date().getHours();
+        let greeting = 'Good evening';
+        if (hour < 12) greeting = 'Good morning';
+        else if (hour < 18) greeting = 'Good afternoon';
+        
+        const text = `Welcome! ${greeting}. I am Harshad's AI assistant. Feel free to ask me anything!`;
+        
+        setState('speaking');
+        setCaption(text);
+        speakText(text).then(() => {
+          setState(prev => prev === 'speaking' ? 'idle' : prev);
+        });
+
+        window.removeEventListener('click', playGreeting);
+        window.removeEventListener('keydown', playGreeting);
+        window.removeEventListener('touchstart', playGreeting);
+      };
+
+      window.addEventListener('click', playGreeting);
+      window.addEventListener('keydown', playGreeting);
+      window.addEventListener('touchstart', playGreeting);
+      
+      return () => {
+        window.removeEventListener('click', playGreeting);
+        window.removeEventListener('keydown', playGreeting);
+        window.removeEventListener('touchstart', playGreeting);
+      };
+    }
+  }, [supported, synthReady, speakText]);
 
   /* ── Cleanup on unmount ── */
   useEffect(() => {
@@ -448,15 +542,17 @@ export const VoiceAgent: React.FC = () => {
               )}
 
               {/* Caption */}
-              <p style={{
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                color: 'var(--text)',
-                lineHeight: '1.5',
-                margin: 0,
-              }}>
-                {caption}
-              </p>
+              {state !== 'speaking' && (
+                <p style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  color: 'var(--text)',
+                  lineHeight: '1.5',
+                  margin: 0,
+                }}>
+                  {caption}
+                </p>
+              )}
             </div>
           </motion.div>
         )}
